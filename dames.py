@@ -458,12 +458,19 @@ def prisePossible(plateau,x,y):#17
 	ATTENTION : cette fonction ne modifie pas le plateau
 	Difficulté : *
     """
+	if plateau[x][y] in joueur1_pion_ids:
+		pion_adverse = joueur2_pion_ids
+	elif plateau[x][y] in joueur2_pion_ids:
+		pion_adverse = joueur1_pion_ids
+	else:
+		return None
 
 	if plateau[x][y] in pions_and_dames_id:
 		liste_prise_Possible = []
 		for diag in range(1,5):
 			res = prisePossibleDiag(plateau,x,y,diag)
-			if res != None:
+			if res != None and plateau[res[0]][res[1]] in pion_adverse:
+				
 				liste_prise_Possible.append(res)
 	else:
 		liste_prise_Possible == []
@@ -629,8 +636,55 @@ def realiserPrise(plateau,joueurCourant,x,y,z,t,priseMultiple):#21
 				changementEnDame(plateau,2,z,t)
 	return res
 		
-		
+def prise_obligatoire(plateau,joueurCourant,x,y):
+	"""	
+	Fonction qui verifie que le pion en x,y est un pion qui peut manger un pion
+	adverse 
+	Paramètres :
+		- plateau : le plateau (matrice nxn)
+		- joueurCourant : le (numéro du) joueur qui réalise ce coup
+		- x,y les coordonnées de la case de départ
+		Résultat :
+		-False si le pion peut manger un adverser ou qu'aucun autre pion peut manger un adverser sinon True
+ 	"""
+	if joueurCourant == 1:
+		ids_pions = joueur1_pion_ids
+	else:
+		ids_pions = joueur2_pion_ids
+	
+	if prisePossible(plateau, x, y) != []:
+		return False 
+	else:
+ 		prise_Possible = False
+	x = 0
+	while prise_Possible == False and len(plateau) > x:
+		y = 0
+		while prise_Possible == False  and len(plateau) > y:
+			if plateau[x][y] in ids_pions:
+				if prisePossible(plateau, x, y) != []:
+					prise_Possible = True
+			y += 1
+		x += 1
+	return prise_Possible
 
+
+def mouvement_prise_obligatoire(plateau,joueurCourant,x,y,z,t):
+    """	
+	Fonction qui verifie que le pion choisi mange bien un pion est ne fais pas un 
+	simple deplacent 
+	Paramètres :
+		- plateau : le plateau (matrice nxn)
+		- joueurCourant : le (numéro du) joueur qui réalise ce coup
+		- x,y les coordonnées de la case de départ
+		- z,t les coordonnées de la case d'arrivée
+		Résultat :
+		-True si le deplacement respecte la régle de la prise obligatoire sinon false
+ 	"""
+
+	
+	
+  
+  
 #------------------------------------------------------------
 # Fonctions principales (utilisées par les interfaces de jeu)
 #------------------------------------------------------------
@@ -707,7 +761,6 @@ def choisirCase(plateau,phase):#2
 
 	return (None,None)
 
-
 def verifierPionChoisi(plateau,joueurCourant,x,y):#22
 	"""
     Fonction qui vérifie que les coordonnées (x,y) correspondent à celles d'un pion
@@ -720,7 +773,7 @@ def verifierPionChoisi(plateau,joueurCourant,x,y):#22
         - 1 si la case choisit n'est pas valide (pas une case, pas une case noire)
         - 2 si il n'y a pas de pion (du joueur) en (x,y)
         - 3 si le pion n'est pas jouable
-        - 4 si la règle de prise obligatoire n'est pas respectée (option)
+        - 4 si la règle de prise bligatoire n'est pas respectée (option)
         - 5 si la règle de prise majoritaire n'est pas respectée (option)
         - 10 si le pion ou la dame en (x,y) peut-être joué(e)
 	ATTENTION : cette fonction ne modifie pas le plateau
@@ -743,7 +796,8 @@ def verifierPionChoisi(plateau,joueurCourant,x,y):#22
 		
 	if jouable(plateau,x,y) == False:
 		return 3
-
+	if prise_obligatoire(plateau,joueurCourant,x,y):
+		return 4
 	return 10
 
 def realiserAction(plateau,joueurCourant,x,y,z,t,priseMultiple):#23
@@ -769,16 +823,19 @@ def realiserAction(plateau,joueurCourant,x,y,z,t,priseMultiple):#23
     """
 
 	res = 0
-	if coordonneesValides == False:
+	if coordonneesValides(plateau, x ,y) == False or coordonneesValides(plateau, z ,t) == False:
 		return 0
-	if diagonale == 0:
+	if diagonale(x, y, z, t) == 0:
 		return 1
+
 	len_prise_mult = len(priseMultiple)
 	if realiserPrise(plateau,joueurCourant,x,y,z,t,priseMultiple):
 		if len(priseMultiple) > len_prise_mult:
 			res = 12
 		else:
 			res = 11
+	elif prisePossible(plateau, x, y) != [] and prisePossibleDest(plateau,x,y,z,t) == None:
+		res = 4
 	elif realiserDeplacement(plateau,x,y,z,t):
 		res = 10
 		if res in (10,11):
@@ -799,9 +856,29 @@ def finDePartie(plateau,joueurCourant):#24
       - 0 sinon (le joueur adverse n'a pas perdu)
 	Difficulté : **
     """
-	pass
-			
+	if joueurCourant == 1:
+		ids_pions = joueur2_pion_ids
+	else:
+		ids_pions = joueur1_pion_ids
+	cpt_pions = 0
+	x = 0
+	peu_jouer = False
+	while peu_jouer == False and len(plateau) > x:
+		y = 0
+		while peu_jouer == False and len(plateau) > y:
+			if plateau[x][y] in ids_pions:
+				cpt_pions += 1
+				if jouable(plateau, x, y) == True:
+					peu_jouer = True
 
+			y += 1
+		x += 1
+	if cpt_pions == 0:
+		return 1
+	elif peu_jouer == False:
+		return 2
+	return 0
+		
 #------------------------------------------------------------
 # programme de test
 #------------------------------------------------------------
@@ -856,7 +933,6 @@ if __name__=='__main__':
 	assert changementEnDame(plateau,1,7,0) == True,"Test invalide : changementEnDame"
 	assert changementEnDame(plateau,2,7,4) == False,"Test invalide : changementEnDame"
 	assert changementEnDame(plateau,2,0,1) == True,"Test invalide : changementEnDame"
-	print(plateau)
 	#tests de la fonction caseSuivanteDiag(plateau,x,y,diag)#8
 	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],0,1,1)==None,"Test invalide : caseSuivanteDiag"#bord haut du plateau
 	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],2,1,4)==(3,0),"Test invalide : caseSuivanteDiag"#diagonale 4 ok
@@ -922,5 +998,5 @@ if __name__=='__main__':
 #	assert realiserAction([[0,0,0,0],[1,0,0,0],[0,2,0,0],[0,0,0,0]],1,1,0,3,2,[])==13,"Test invalide : realiserAction"#prise de pion+transformaiton pion -> dame
 
 	#tests de la fonction finDePartie(plateau,joueurCourant)#24
-	#assert finDePartie([[0,1,0,1],[0,0,0,0],[0,2,0,0],[0,0,0,0]],1)==0,"Test invalide : finDePartie" #l'adversaire peut jouer (se déplacer)
-	#assert finDePartie([[0,0,0,0],[0,0,0,0],[0,1,0,0],[2,0,2,0]],2)==2,"Test invalide : finDePartie"
+	assert finDePartie([[0,1,0,1],[0,0,0,0],[0,2,0,0],[0,0,0,0]],1)==0,"Test invalide : finDePartie" #l'adversaire peut jouer (se déplacer)
+	assert finDePartie([[0,0,0,0],[0,0,0,0],[0,1,0,0],[2,0,2,0]],2)==2,"Test invalide : finDePartie"
