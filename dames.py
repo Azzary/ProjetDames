@@ -8,10 +8,9 @@
 """
 
 
-#Variable...
-# joueur1_pion_ids et joueur2_pion_ids sont des variables créées pour évite
+#Variable
+# elle sont crée pour eviter d'ecrire en dure dans le code et pour évite
 # s'il y un changement ou un ajout de devoir les changer toute une par une
-#donc de ne pas les ecrire en dire 
 pions_and_dames_id = (1,2,11,12)
 pions_id = (1,2)
 dames_id = (11,12)
@@ -20,6 +19,13 @@ joueur2_pion_ids = (2,12)
 #------------------------------------------------------------
 # Fonctions de base (ne dépendent pas d'autres fonctions)
 #------------------------------------------------------------
+
+
+def changerPionChoisi(plateau,z,t,joueurCourant):
+	if plateau[z][t] in get_pions_allie(plateau,z,t,joueurCourant):
+		return True
+	else:
+		return False
 
 def coordonneesValides(plateau,x,y):#3
 	"""
@@ -41,6 +47,52 @@ def coordonneesValides(plateau,x,y):#3
 				if y%2 == 0:
 					return True
 	return False
+
+
+def get_pions_adverse(plateau,x,y,joueurCourant = None):
+	"""
+	Fonction fonction qui trouve les ids des pions adverse soit avec le pion/dame en x,y soit avec le joueurCourant
+	None est affecter de base joueurCourant, si aucun valeur lui est donner 
+		- plateau : le plateau (matrice nxn)
+		- x,y les coordonnées du pion
+		- joueurCourant : le numéro du joueur en train de jouer (Pas obligatoire) 
+	Résultat : Return une liste des ids des pion/dame ennemie 
+	"""
+	if joueurCourant != None:
+		if joueurCourant == 1 :
+			return joueur2_pion_ids
+		elif joueurCourant == 2:
+			return joueur1_pion_ids
+	elif coordonneesValides(plateau,x,y):
+		if plateau[x][y] in joueur1_pion_ids:
+			return joueur2_pion_ids
+		elif plateau[x][y] in joueur2_pion_ids:
+			return joueur1_pion_ids
+
+	return ()
+
+def get_pions_allie(plateau,x,y,joueurCourant = None):
+	"""
+    Fonction fonction qui trouve les ids des pions allié soit avec le pion/dame en x,y soit avec le joueurCourant
+	None est affecter de base joueurCourant, si aucun valeur lui est donner 
+		- plateau : le plateau (matrice nxn)
+		- x,y les coordonnées du pion
+		- joueurCourant : le numéro du joueur en train de jouer (Pas obligatoire) 
+	Résultat : Return une tuple des ids des pion/dame allié (1,11) si le joueur 1 joue, (2,12) si  si le joueur 2 joue
+    """
+	if joueurCourant != None:
+		if joueurCourant == 1 :
+			return joueur1_pion_ids
+		elif joueurCourant == 2:
+			return joueur2_pion_ids
+	elif coordonneesValides(plateau,x,y):
+		if plateau[x][y] in joueur1_pion_ids:
+			return joueur1_pion_ids
+		elif plateau[x][y] in joueur2_pion_ids:
+			return joueur2_pion_ids
+
+	return ()
+
 
 def diagonale(x,y,z,t):#4
 	"""
@@ -91,13 +143,10 @@ def pionDuJoueur(plateau,joueurCourant,x,y):#5
 	ATTENTION : cette fonction ne modifie pas le plateau
 	Difficulté : *
     """
-    # joueur1_pion_ids et joueur2_pion_ids sont des variables créées en haut du script
-	#cela évite s'il y un changement ou un ajout de devoir les changer toute une par une 
     
-	if joueurCourant == 1:
-		ids_pions = joueur1_pion_ids
-	else:
-		ids_pions = joueur2_pion_ids
+	
+	ids_pions = get_pions_allie(plateau,x,y,joueurCourant)
+
 
 	if plateau[x][y] in ids_pions:
 		return True
@@ -140,13 +189,13 @@ def changementEnDame(plateau,joueurCourant,x,y):#7
 	#joueur 2(noir): id pions = 2
 	#				 id dame = 12
 
+	
 	if joueurCourant == 1: joueur_pion_id, joueur_dame_id, plateau_index  = joueur1_pion_ids[0],joueur1_pion_ids[1], len(plateau)-1
 	else:  joueur_pion_id, joueur_dame_id, plateau_index = joueur2_pion_ids[0],joueur2_pion_ids[1], 0
 
-	if x == plateau_index:
+	if x == plateau_index and plateau[x][y] == joueur_pion_id:
 		res = True
-		if plateau[x][y] == joueur_pion_id:
-			plateau[x][y] = joueur_dame_id
+		plateau[x][y] = joueur_dame_id
 	else:
 		res = False
 
@@ -157,7 +206,7 @@ def changementEnDame(plateau,joueurCourant,x,y):#7
 # Fonct. de traitements intermédiaires (utilisent des fonct. précédentes)
 #------------------------------------------------------------------------
 
-def caseSuivanteDiag(plateau,x,y,diag, nb_casses_suivant = 0):#8
+def caseSuivanteDiag(plateau,x,y,diag):#8
 	"""
     Fonction qui renvoie les coordonnées de la case suivant la case (x,y) sur la diagonale diag
 	Paramètres :
@@ -172,13 +221,13 @@ def caseSuivanteDiag(plateau,x,y,diag, nb_casses_suivant = 0):#8
 	if coordonneesValides(plateau,x,y) == False:
 		return None
 	if diag == 1:
-		z, t = x- (1+ nb_casses_suivant), y-(1+ nb_casses_suivant)
+		z, t = x- 1, y-1
 	elif diag == 2:
-		z, t = x- (1+ nb_casses_suivant), y+1+ nb_casses_suivant
+		z, t = x- 1, y+1
 	elif diag == 3:
-		z, t = x+ 1+ nb_casses_suivant, y+1+ nb_casses_suivant
+		z, t = x+ 1 , y+1
 	else:
-		z, t = x+ 1+ nb_casses_suivant, y-(1+ nb_casses_suivant)
+		z, t = x+ 1 , y-1
 	
 	if coordonneesValides(plateau,z,t) == False:
 		return None
@@ -201,6 +250,7 @@ def nbCasesVidesDiag(plateau,x,y,diag,limite = False):#9
     """
 	flag = True
 	i = 0
+	#boucle si tout les cases d'une diagonale une par une jusqu'a trouver un pion/dame
 	while flag:
 		res = caseSuivanteDiag(plateau,x,y,diag)
 		if res == None:
@@ -226,7 +276,6 @@ def nbCases(plateau,x,y,z,t):#9bis
 	Résultat : un entier correspondant au nombre de cases vides
 	(0 s'il n'y en a aucune dans la direction diag)
 	ATTENTION : cette fonction ne modifie pas le plateau
-	Difficulté : **
     """
 	
 	i = 0
@@ -289,25 +338,34 @@ def deplacementPossible(plateau,x,y):#11
 	#
 	#joueur 2(noir): id pions = 2
 	#				 id dame = 12
- 
-	if plateau[x][y] in pions_and_dames_id:
-		if plateau[x][y] in dames_id:
-			res = _deplacementPossibleBoucle(plateau,x,y,1,5,False)
-		elif plateau[x][y] == joueur1_pion_ids[0]:
-			res = _deplacementPossibleBoucle(plateau,x,y,3,5,True)
-		elif plateau[x][y] == joueur2_pion_ids[0]:
-			res = _deplacementPossibleBoucle(plateau,x,y,1,3,True)
-	else:
-		res = False
-	return res 
-
-def _deplacementPossibleBoucle(plateau,x,y,diag,diag_max,limite):
 	res = False
-	while res == False and diag < diag_max:
-		if nbCasesVidesDiag(plateau,x,y,diag,limite) > 0:
-			res = True
-		diag += 1
+	
+
+	if plateau[x][y] in pions_and_dames_id:
+		#permet de savoir dans quel direction (diagonale) doit aller le pion car il pions blanc peut seulement aller vers la 
+		#"base" des noirs
+		if plateau[x][y] in dames_id:
+			diag = 1
+			diag_max = 5
+			limite = False
+		elif plateau[x][y] == joueur1_pion_ids[0]:
+			diag = 3
+			diag_max = 5
+			limite = True
+		elif plateau[x][y] == joueur2_pion_ids[0]:
+			diag = 1
+			diag_max = 3
+			limite = True
+		else:
+			return False
+		while res == False and diag < diag_max:
+			if nbCasesVidesDiag(plateau,x,y,diag,limite) > 0:
+				res = True
+			diag += 1
 	return res
+
+
+
 
 def pionPrisePossibleDiag(plateau,x,y,diag):#12
 	"""
@@ -328,26 +386,24 @@ def pionPrisePossibleDiag(plateau,x,y,diag):#12
 	#
 	#joueur 2(noir): id pions = 2
 	#				 id dame = 12
-    
 
-	ids = joueur1_pion_ids[0] , joueur2_pion_ids[0]
-		
+
+
+	coordonneesValides(plateau,x,y)
+	# permet d'avoir la prochaine case dans la diagonale {diag} puis verifier si elle existe
 	cell = caseSuivanteDiag(plateau,x,y,diag)
-	if cell != None and plateau[x][y] != 0:
+	if cell != None and plateau[x][y] in pions_id:
 		
-		if plateau[x][y] == ids[0]:
-			pion_adverse = joueur2_pion_ids
-		elif plateau[x][y] == ids[1]:
-			pion_adverse = joueur1_pion_ids
-
 		z1,t1 = cell
+		#puis verifier si il y bien une case vide (0) apres
 		cell = caseSuivanteDiag(plateau,z1,t1,diag)
 		if cell != None:
+			pion_adverse = get_pions_adverse(plateau,x,y)
 			z2,t2 = cell
 			if plateau[z1][t1] in pion_adverse and plateau[z2][t2] == 0:
 				return z1,t1
 	return None
-        
+		
         
     
 
@@ -388,14 +444,16 @@ def damePrisePossibleDiag(plateau,x,y,diag):#14
 	ATTENTION : cette fonction ne modifie pas le plateau
 	Difficulté : **
 	"""
+ 	
 	res = prochainPionDiag(plateau,x,y,diag)
 	if res != None:
 		u,v = res
-		res = caseSuivanteDiag(plateau,u,v,diag)
-		if res != None:
-			z,t = res 
-			if plateau[z][t] == 0:
-				return u,v
+		if plateau[u][v] in get_pions_adverse(plateau,x,y):
+			res = caseSuivanteDiag(plateau,u,v,diag)
+			if res != None:
+				z,t = res 
+				if plateau[z][t] == 0:
+					return u,v
 
 	return None
      
@@ -458,11 +516,9 @@ def prisePossible(plateau,x,y):#17
 	ATTENTION : cette fonction ne modifie pas le plateau
 	Difficulté : *
     """
-	if plateau[x][y] in joueur1_pion_ids:
-		pion_adverse = joueur2_pion_ids
-	elif plateau[x][y] in joueur2_pion_ids:
-		pion_adverse = joueur1_pion_ids
-	else:
+	
+	pion_adverse = get_pions_adverse(plateau,x,y)
+	if pion_adverse == ():
 		return None
 
 	if plateau[x][y] in pions_and_dames_id:
@@ -494,28 +550,39 @@ def prisePossibleDest(plateau,x,y,z,t):#18
     """
 	if coordonneesValides(plateau,z,t) and plateau[z][t] == 0:
 		
-		if plateau[x][y] in joueur1_pion_ids:
-			pion_adverse = joueur2_pion_ids
-		elif plateau[x][y] in joueur2_pion_ids:
-			pion_adverse = joueur1_pion_ids
-		else:
+		pion_adverse = get_pions_adverse(plateau,x,y)
+		if pion_adverse == ():
 			return None
+
+		#Permet d'obtenir la diagonale entre 2 point(si elle existe)
 		diag = diagonale(x,y,z,t)
 		if diag == 0: return None
 
+		#Partie pour les pions:
 		if plateau[x][y] in pions_id:
+			#on utilise la diagonale trouver avant pour chercher si il y un pion/dame mangeable dans cette diag
 			res = pionPrisePossibleDiag(plateau,x,y,diag)
 			if res != None:
+				#il y un mangeable, on verifie bien que (z,t) correspond a la case apres le pion
 				if plateau[res[0]][res[1]] in pion_adverse and caseSuivanteDiag(plateau,res[0],res[1],diag) == (z,t): 
 					return res
-						
+		#Partie pour les dames:
 		elif plateau[x][y] in dames_id:
+			#on utilise la diagonale trouver avant pour chercher si il y un pion/dame mangeable dans cette diag
 			res = damePrisePossibleDiag(plateau,x,y,diag)
 			if res != None:
-				if plateau[res[0]][res[1]] in pion_adverse and caseSuivanteDiag(plateau,res[0],res[1],diag) == (z,t): 
+				if plateau[res[0]][res[1]] in pion_adverse: 
+					#il y un mangeable, on verifie bien que (z,t) correspond a une case ou la dame peut ce poser apres avoir manger sans sauter un autre pion
+					case_suivante = caseSuivanteDiag(plateau,res[0],res[1],diag)
+					while case_suivante != (z,t):
+						if case_suivante == None:
+							return None
+						if plateau[case_suivante[0]][case_suivante[1]] != 0:
+							return None
+						case_suivante = caseSuivanteDiag(plateau,case_suivante[0],case_suivante[1],diag)
+						
 					return res
 		
-		#im herree
 	return None
 
 	
@@ -556,10 +623,11 @@ def realiserDeplacement(plateau,x,y,z,t):#20
 	Difficulté : **
     """
 	res = False
+	# les coordonnées sont valide et la case d'arriver est vide (0)
 	if coordonneesValides(plateau,z,t) and  coordonneesValides(plateau,x,y) and plateau[z][t] == 0:
 		diag = diagonale(x,y,z,t)
 		if diag == 0: return False
-
+		#si la case apres le pion dans la diagonale {diag} a pour coordonée (z,t) et qu'il se deplace dans la bonne diagonale on revoie true 
 		if plateau[x][y] in pions_id and caseSuivanteDiag(plateau,x,y,diag) == (z,t):
 			if plateau[x][y] == joueur2_pion_ids[0] and diag in (1,2) or plateau[x][y] == joueur1_pion_ids[0] and diag in (3,4):
 				res = True
@@ -573,6 +641,7 @@ def realiserDeplacement(plateau,x,y,z,t):#20
 				nb_case1 = nbCasesVidesDiag(plateau,x,y,diag)
 				diag = diagonale(z,t,x,y)
 				nb_case2 = nbCases(plateau,x,y,z,t)
+				# on regarde la difference entre le nombre de case vide dans la diagonale de x,y --> z,t et la nb de case entre x,y et z,t
 				if nb_case1 >= nb_case2:
 					res = True
 			else:
@@ -621,13 +690,13 @@ def realiserPrise(plateau,joueurCourant,x,y,z,t,priseMultiple):#21
 		if uv != None:
 			res = True
 			u,v = uv 
-			plateau[z][t],plateau[x][y] = int(plateau[x][y]),0
+			plateau[z][t],plateau[x][y] = (plateau[x][y]),0
 			if prisePossible(plateau,z,t)  == [(u,v)]:
 				plateau[u][v] = 0
 				enleverPionsPriseMultiple(plateau,priseMultiple)
 				
 			else:
-				plateau[u][v] = -int(plateau[u][v])
+				plateau[u][v] = -(plateau[u][v])
 				priseMultiple.append((u,v))
     
 			if plateau[z][t] == joueur1_pion_ids[0]:
@@ -647,12 +716,10 @@ def prise_obligatoire(plateau,joueurCourant,x,y):
 		Résultat :
 		-False si le pion peut manger un adverser ou qu'aucun autre pion peut manger un adverser sinon True
  	"""
-	if joueurCourant == 1:
-		ids_pions = joueur1_pion_ids
-	else:
-		ids_pions = joueur2_pion_ids
+	ids_pions = get_pions_allie(plateau,x,y,joueurCourant)
+
 	
-	if prisePossible(plateau, x, y) != []:
+	if prisePossible(plateau, x, y) != [] or ids_pions == ():
 		return False 
 	else:
  		prise_Possible = False
@@ -732,7 +799,7 @@ def initialisePlateau(dim):#1
 			else:
 				plateau[i][j] = joueur2_pion_ids[0]
 
-	
+	#plateau = [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 11, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 12, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]
 	return plateau
  
 def choisirCase(plateau,phase):#2
@@ -822,10 +889,11 @@ def realiserAction(plateau,joueurCourant,x,y,z,t,priseMultiple):#23
 	Difficulté : ***
     """
 
-	res = 0
+	res = 1
+	base_ids = plateau[x][y]
 	if coordonneesValides(plateau, x ,y) == False or coordonneesValides(plateau, z ,t) == False:
 		return 0
-	if diagonale(x, y, z, t) == 0:
+	if diagonale(x, y, z, t) == 0 or plateau[z][t] != 0:
 		return 1
 
 	len_prise_mult = len(priseMultiple)
@@ -834,13 +902,24 @@ def realiserAction(plateau,joueurCourant,x,y,z,t,priseMultiple):#23
 			res = 12
 		else:
 			res = 11
-	elif prisePossible(plateau, x, y) != [] and prisePossibleDest(plateau,x,y,z,t) == None:
-		res = 4
-	elif realiserDeplacement(plateau,x,y,z,t):
+	elif prisePossibleDest(plateau,x,y,z,t) == None:
+		#permet d'afficher le bon message si le joueur clique bien dans la bonne diagonale
+		#mais plus loin
+		prise_possible = prisePossible(plateau, x, y) 
+		if prise_possible != []:
+			for u,v in prise_possible:
+				if diagonale(x, y, z, t) == diagonale(x, y, u, v) and nbCases(plateau, x, y, z, t) > nbCases(plateau, x, y, u, v):
+					return 1
+			res = 4
+	if res == 1 and realiserDeplacement(plateau,x,y,z,t):
 		res = 10
-		if res in (10,11):
-			pass#res = 13
+	if res in (10,11):
+		if base_ids in pions_id and plateau[z][t] in dames_id:
+			res = 13
+
+		
 	return res 
+
 
 def finDePartie(plateau,joueurCourant):#24
 	"""
@@ -856,26 +935,25 @@ def finDePartie(plateau,joueurCourant):#24
       - 0 sinon (le joueur adverse n'a pas perdu)
 	Difficulté : **
     """
-	if joueurCourant == 1:
-		ids_pions = joueur2_pion_ids
-	else:
-		ids_pions = joueur1_pion_ids
+	x=-1
+	y=-1
+	ids_pions = get_pions_adverse(plateau,x,y,joueurCourant)
 	cpt_pions = 0
 	x = 0
-	peu_jouer = False
-	while peu_jouer == False and len(plateau) > x:
+	peut_jouer = False
+	while peut_jouer == False and len(plateau) > x:
 		y = 0
-		while peu_jouer == False and len(plateau) > y:
+		while peut_jouer == False and len(plateau) > y:
 			if plateau[x][y] in ids_pions:
 				cpt_pions += 1
 				if jouable(plateau, x, y) == True:
-					peu_jouer = True
+					peut_jouer = True
 
 			y += 1
 		x += 1
 	if cpt_pions == 0:
 		return 1
-	elif peu_jouer == False:
+	elif peut_jouer == False:
 		return 2
 	return 0
 		
@@ -890,7 +968,7 @@ if __name__=='__main__':
 	assert initialisePlateau(4)==[[0,1,0,1],[0,0,0,0],[0,0,0,0],[2,0,2,0]],"Test invalide : initialiserPlateau"#plateau 4x4
 	assert initialisePlateau(6)==[[0,1,0,1,0,1],[1,0,1,0,1,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,2,0,2,0,2],[2,0,2,0,2,0]],"Test invalide : initialiserPlateau"#plateau 6x6
 	assert initialisePlateau(8)==[[0, 1, 0, 1, 0, 1, 0, 1], [1, 0, 1, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 0, 2, 0, 2, 0, 2, 0], [0, 2, 0, 2, 0, 2, 0, 2], [2, 0, 2, 0, 2, 0, 2, 0]],"Test invalide : initialiserPlateau"
-
+	
 	#3 - tests de la fonction coordonneesValides(plateau,x,y)
 	assert coordonneesValides(plateau,1,0)==True,"Test invalide : coordonneesValides (plateau 8)"
 	assert coordonneesValides(plateau,2,4)==False,"Test invalide : coordonneesValides (plateau 8)"
@@ -922,7 +1000,7 @@ if __name__=='__main__':
 	assert pionDuJoueur(plateau,2,7,7) == False,"Test invalide : pionDuJoueur"
 	assert pionDuJoueur(plateau,2,7,4) == True,"Test invalide : pionDuJoueur"
 	#6 - tests de la fonction enleverPionsPriseMultiple(plateau,priseMultiple)
-	
+	#assert enleverPionsPriseMultiple(plateau,[]) == True,"Test invalide : pionDuJoueur"
 	#7 - tests de la fonction changementEnDame(plateau,joueurCourant,x,y)
 
 	if coordonneesValides(plateau,7,0):
@@ -934,7 +1012,10 @@ if __name__=='__main__':
 	assert changementEnDame(plateau,2,7,4) == False,"Test invalide : changementEnDame"
 	assert changementEnDame(plateau,2,0,1) == True,"Test invalide : changementEnDame"
 	#tests de la fonction caseSuivanteDiag(plateau,x,y,diag)#8
-	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],0,1,1)==None,"Test invalide : caseSuivanteDiag"#bord haut du plateau
+	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],0,1,1)==None,"Test invalide : caseSuivanteDiag"#Sortie du plateau ok
+	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],2,1,4)==(3,0),"Test invalide : caseSuivanteDiag"#diagonale 1 ok
+	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],2,1,4)==(3,0),"Test invalide : caseSuivanteDiag"#diagonale 2 ok
+	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],2,1,4)==(3,0),"Test invalide : caseSuivanteDiag"#diagonale 3 ok
 	assert caseSuivanteDiag([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],2,1,4)==(3,0),"Test invalide : caseSuivanteDiag"#diagonale 4 ok
 
 	#tests de la fonction nbCasesVidesDiag(plateau,x,y,diag)#9
@@ -994,9 +1075,11 @@ if __name__=='__main__':
 	assert verifierPionChoisi([[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],1,0,1)==2,"Test invalide : verifierPionChoisi"#pas de pion sur la case
 
 	#tests de la fonction realiserAction(plateau,joueurCourant,x,y,z,t,priseMultiple)#23
+	assert realiserAction([[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 0, 0, 12, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]],2 ,5 ,6, 1 ,2 ,[])==1,"Test invalide : realiserAction"
 	assert realiserAction([[0,1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],1,0,1,3,4,[])==0,"Test invalide : realiserAction" #déplacement hors plateau
-#	assert realiserAction([[0,0,0,0],[1,0,0,0],[0,2,0,0],[0,0,0,0]],1,1,0,3,2,[])==13,"Test invalide : realiserAction"#prise de pion+transformaiton pion -> dame
-
+	assert realiserAction([[0,0,0,0],[1,0,0,0],[0,2,0,0],[0,0,0,0]],1,1,0,3,2,[])==13,"Test invalide : realiserAction"#prise de pion+transformaiton pion -> dame
+	assert realiserAction([[0,1,0,0],[0,0,1,0],[0,0,0,0],[0,0,0,0]],1,0,1,2,3,[])== 1,"fff"
 	#tests de la fonction finDePartie(plateau,joueurCourant)#24
 	assert finDePartie([[0,1,0,1],[0,0,0,0],[0,2,0,0],[0,0,0,0]],1)==0,"Test invalide : finDePartie" #l'adversaire peut jouer (se déplacer)
 	assert finDePartie([[0,0,0,0],[0,0,0,0],[0,1,0,0],[2,0,2,0]],2)==2,"Test invalide : finDePartie"
+

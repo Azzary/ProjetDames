@@ -25,8 +25,7 @@ class DamesGraphique(object):#OK
     def __init__(self, plateau, titre="Jeu de dames de l'UNC", size=(1000, 800), couleur=(209,238,238),prefixeImage="./images"):
         """Method docstring."""
         self.messageInfo=None
-        self.plateau=plateau
-        self.plateau[5][6] = 12
+        self.plateau = plateau
         self.joueurCourant=2
         self.priseMultiple=[]
         self.fini=False
@@ -111,32 +110,32 @@ class DamesGraphique(object):#OK
                 s=pygame.transform.smoothscale(img,(self.deltal,self.deltah))
                 self.surface.blit(s,((j+1)*self.deltal,(i+1)*self.deltah))
 				#affichage du pion/dame==============================================
-                if plateau[i][j]:
+                if self.plateau[i][j]:
                     if i==x and j==y :
-                        if plateau[i][j]==1:
+                        if self.plateau[i][j]==1:
                             img=pygame.image.load(os.path.join(prefixImage,'pionNoirSelection.png'))
-                        elif plateau[i][j]==2:
+                        elif self.plateau[i][j]==2:
                             img=pygame.image.load(os.path.join(prefixImage,'pionBlancSelection.png'))
-                        elif plateau[i][j]==11:
+                        elif self.plateau[i][j]==11:
                             img=pygame.image.load(os.path.join(prefixImage,'dameNoireSelection.png'))
-                        elif plateau[i][j]==12:
+                        elif self.plateau[i][j]==12:
                             img=pygame.image.load(os.path.join(prefixImage,'dameBlancheSelection.png'))
                     else:
-                        if plateau[i][j]==1:
+                        if self.plateau[i][j]==1:
                             img=pygame.image.load(os.path.join(prefixImage,'pionNoir.png'))
-                        elif plateau[i][j]==2:
+                        elif self.plateau[i][j]==2:
                             img=pygame.image.load(os.path.join(prefixImage,'pionBlanc.png'))
-                        elif plateau[i][j]==11:
+                        elif self.plateau[i][j]==11:
                             img=pygame.image.load(os.path.join(prefixImage,'dameNoire.png'))
-                        elif plateau[i][j]==12:
+                        elif self.plateau[i][j]==12:
                             img=pygame.image.load(os.path.join(prefixImage,'dameBlanche.png'))
-                        elif plateau[i][j]==-1:
+                        elif self.plateau[i][j]==-1:
                             img=pygame.image.load(os.path.join(prefixImage,'pionNoirPris.png'))
-                        elif plateau[i][j]==-2:
+                        elif self.plateau[i][j]==-2:
                             img=pygame.image.load(os.path.join(prefixImage,'pionBlancPris.png'))
-                        elif plateau[i][j]==-11:
+                        elif self.plateau[i][j]==-11:
                             img=pygame.image.load(os.path.join(prefixImage,'dameNoirePrise.png'))
-                        elif plateau[i][j]==-12:
+                        elif self.plateau[i][j]==-12:
                             img=pygame.image.load(os.path.join(prefixImage,'dameBlancheprise.png'))
                     s=pygame.transform.smoothscale(img,(self.deltal-diff,self.deltah-diff))
                     self.surface.blit(s,((j+1)*self.deltal+diff//2,(i+1)*self.deltah+diff//2))
@@ -162,10 +161,33 @@ class DamesGraphique(object):#OK
         self.afficheMessageInfo(2)
         pygame.display.flip()
 
+    def redemarrer_jeu(self,plateau = None):
+        """[summary]
+        Permet de relancer une partie en réinitialisant le plateau est les variables
+        un plateau peut etre donner sinon par defaut plateau de 8*8
+        Arguments:
+            plateau {[list]} -- [matrice]
+        """
+        self.new_partie = False
+        if plateau == None:
+            plateau = initialisePlateau(8)
+        self.messageInfo=None
+        self.plateau = plateau
+        self.joueurCourant=2
+        self.priseMultiple=[]
+        self.fini=False
+        self.dim=len(self.plateau)
+        
+        #lecture du logo de l'UNC
+        self.surface=pygame.display.get_surface()
+        self.miseAjourParametres()
+        self.afficheJeu()
+    
     def demarrer(self):
         """
         démarre l'environnement graphique et la boucle d'écoute des événements
         """
+        self.new_partie = False
         self.joueurCourant=2
         self.phase=1#choisir un pion
         pygame.time.set_timer(pygame.USEREVENT+1,100)
@@ -180,10 +202,17 @@ class DamesGraphique(object):#OK
                 self.miseAjourParametres()
                 self.afficheJeu()
             if ev.type==pygame.MOUSEBUTTONDOWN:
-                if self.fini:
-                    continue
                 (a,b)=self.getCase(ev.pos)
-                if self.phase==1:#choix d'un pion
+                if self.fini:
+                    x,y=a,b
+                    self.messageInfo="Cliquer sur une case blanche pour rejouer..."
+                    self.imgInfo=[]
+                    res=verifierPionChoisi(self.plateau, self.joueurCourant, x, y)
+                    if res == 1:
+                        self.fini = False
+                        self.new_partie = True
+                        
+                elif self.phase==1:#choix d'un pion
                     x,y=a,b
                     res=verifierPionChoisi(self.plateau, self.joueurCourant, x, y)
                     if res==0:
@@ -210,41 +239,81 @@ class DamesGraphique(object):#OK
                         self.phase=2
                 else: # on est dans la phase 2
                     z,t=a,b
-                    res=realiserAction(self.plateau,self.joueurCourant,x,y,z,t,self.priseMultiple)
-                    if res==0:
-                        self.messageInfo="Saisie incorrecte"
-                        self.imgInfo=[]
-                    elif res==1:
-                        self.messageInfo="Ce déplacement n'est pas permis"
-                        self.imgInfo=[]
-                    elif res==4:
-                        self.messageInfo="Rappel de règle : la prise est obligatoire"
-                        self.imgInfo=[]
-                    elif res==5:
-                        self.messageInfo="Rappel de règle : la prise majoritaire est obligatoire"
-                        self.imgInfo=[]
-                    elif res==10:
-                        self.messageInfo="Le joueur s'est déplacé"
-                        self.imgInfo=[]
-                    elif res in [11,12]:
-                        self.messageInfo="Le joueur a pris un pion/une dame à son adversaire"
-                        self.imgInfo=[]
-                    elif res ==13:
-                        self.messageInfo="Le joueur a récupéré une dame"
-                        self.imgInfo=[]
-                    if res==12:
-                        x,y=z,t
-                    elif res in [10,11,13]:
-                        x,y=None,None
-                        self.phase=1
-                        res2=finDePartie(self.plateau,self.joueurCourant)
-                        if res2:
-                            self.messageInfo="Le joueur "+('BLANC' if self.joueurCourant==2 else 'NOIR')+" a gagné!"
+                    #on verifie si clique sur un de ses pions
+                    if self.priseMultiple == [] and changerPionChoisi(self.plateau,z,t,self.joueurCourant):
+                        
+                        #cela permet d'afficher "Ce déplacement n'est pas permis" est non
+                        #changement de pions lorsqu'on clique sur le meme pion actuelement jouer
+                        #on ne peut pas intégrer ce if aux if plus haut car cela permet de jouer
+                        #plusieurs fois de suite si avant chaque coup on clique sur le meme pion actuelement jouer 
+                        #(cela change de jouer mais le pion seletioner rester le même)
+                        if (x==z and y==t):
+                            self.messageInfo="Ce déplacement n'est pas permis"
+                            self.imgInfo=[] 
+                            self.afficheJeu(x,y)
+                            continue
+                        #verifie que le pion respecte les diferentes regles puis on change de pion sans changer de joueur
+                        res_bis = verifierPionChoisi(self.plateau, self.joueurCourant, z, t)
+                        if res_bis == 3:
+                            self.messageInfo="Ce pion ne peut pas bouger"
                             self.imgInfo=[]
-                        self.joueurCourant=(1 if self.joueurCourant==2 else 2) #changement de joueur
+                        elif res_bis == 4:
+                            self.messageInfo="Rappel de règle : la prise est obligatoire"
+                            self.imgInfo=[]
+                        elif res_bis == 5:
+                            self.messageInfo="Rappel de règle : la prise majoritaire est obligatoire"
+                            self.imgInfo=[]
+                        elif res_bis == 10:
+                            x,y=z,t
+                            self.messageInfo="Changement de pion"
+                            self.imgInfo=[]
+                        else:
+                            self.messageInfo="Ce déplacement n'est pas permis"
+                            self.imgInfo=[] 
+                    else:
+                        res=realiserAction(self.plateau,self.joueurCourant,x,y,z,t,self.priseMultiple)
+                        if res==0:
+                            self.messageInfo="Saisie incorrecte"
+                            self.imgInfo=[]
+                        elif res==1:
+                            self.messageInfo="Ce déplacement n'est pas permis"
+                            self.imgInfo=[]  
+                        elif res==4:
+                            self.messageInfo="Rappel de règle : la prise est obligatoire"
+                            self.imgInfo=[]
+                        elif res==5:
+                            self.messageInfo="Rappel de règle : la prise majoritaire est obligatoire"
+                            self.imgInfo=[]
+                        elif res==10:
+                            self.messageInfo="Le joueur s'est déplacé"
+                            self.imgInfo=[]
+                        elif res in [11,12]:
+                            self.messageInfo="Le joueur a pris un pion/une dame à son adversaire"
+                            self.imgInfo=[]
+                        elif res ==13:
+                            self.messageInfo="Le joueur a récupéré une dame"
+                            self.imgInfo=[]
+                        if res==12:
+                            x,y=z,t
+                        elif res in [10,11,13]:
+                            x,y=None,None
+                            self.phase=1
+                            res2=finDePartie(self.plateau,self.joueurCourant)
+                            if res2:
+                                self.messageInfo="Le joueur "+('BLANC' if self.joueurCourant==2 else 'NOIR')+" a gagné! Cliquer sur une case blanche pour rejouer..."
+                                self.imgInfo=[]
+                                self.fini = True 
+
+                            self.joueurCourant=(1 if self.joueurCourant==2 else 2) #changement de joueur
                 self.afficheJeu(x,y)
-            pygame.display.flip()
+        
+            if self.new_partie == True:
+                self.redemarrer_jeu()
+               
+        
         pygame.quit()
+
+            
 
 
 #------------------------------
